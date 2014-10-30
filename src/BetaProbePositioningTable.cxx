@@ -20,6 +20,8 @@ double getX(libusb_device_handle* handle);
 double getX_mm(libusb_device_handle* handle);
 double getY(libusb_device_handle* handle);
 double getY_mm(libusb_device_handle* handle);
+bool scanSpiral(libusb_device_handle* handle);
+bool scanLines(libusb_device_handle* handle);
 
 //--------------------------------------------------
 int xMax = 80235;
@@ -194,12 +196,6 @@ int main(void)
   std::cout << "Homing...";
 
   goToZero(Handle);
-
-  // Move to center
-  if (!goToCenter(Handle))
-    {
-      std::cout << "Failed" << std::endl;
-    }
 	
   std::cout << "Done" << std::endl;
 	
@@ -210,7 +206,7 @@ int main(void)
   std::cout << "Scanning...";
 
   // TODO: Define scanning pattern here
-  moveXYTo_mm(Handle, 20, 80);
+  scanSpiral(Handle);
 	
   std::cout << "Done" << std::endl;
 
@@ -256,6 +252,24 @@ bool goToZero(libusb_device_handle* handle)
       sleep(1);
     } while(((xReturned&32)==0) || ((yReturned&32)==0)); //wait for x and y-axis to reach limit
 
+  // Reset 0
+  cmd.str("");
+  cmd << "PX=0";
+  if(!fnPerformaxComSendRecv(handle, (char*)(cmd.str().c_str()), 64,64, tmp))
+    {
+      std::cout << "Failed" << std::endl;
+      return false;
+    }
+
+  // Reset 0
+  cmd.str("");
+  cmd << "PY=0";
+  if(!fnPerformaxComSendRecv(handle, (char*)(cmd.str().c_str()), 64,64, tmp))
+    {
+      std::cout << "Failed" << std::endl;
+      return false;
+    }
+  
   return true;
 }
 
@@ -424,6 +438,58 @@ double getY(libusb_device_handle* handle)
 double getY_mm(libusb_device_handle* handle)
 {
   return getY(handle)/steps_mm;
+}
+
+//--------------------------------------------------
+bool scanSpiral(libusb_device_handle* handle)
+{
+  int scanStep = 10*steps_mm;
+  double tmp = scanStep;
+
+  if (!goToCenter(handle))
+    {
+      return false;
+    }
+
+  double currentX = getX(handle);
+  double currentY = getY(handle);
+  double nextX = currentX + scanStep;
+  double nextY = currentY + scanStep;
+
+  sleep(1);
+
+  for (int i = 0; (nextX < xMax) && (nextX > 0); ++i)
+    {
+      if (moveXTo(handle,nextX))
+	{
+	  if (moveYTo(handle, nextX))
+	    {
+	      tmp = std::abs(tmp)+scanStep;
+	      if (i%2 == 0)
+		{
+		  tmp = -tmp;
+		}
+	      nextX = getX(handle) + tmp;
+	      nextY = getY(handle) + tmp;
+	    }
+	  else
+	    {
+	      return false;
+	    }
+	}
+      else
+	{
+	  return false;
+	}
+    }
+
+  return true;
+}
+
+//--------------------------------------------------
+bool scanLines(libusb_device_handle* handle)
+{
+  return true;
 }
 
 

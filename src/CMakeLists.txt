@@ -1,0 +1,3 @@
+add_executable (BetaProbePositioningTable BetaProbePositioningTable.cxx)
+
+target_link_libraries (BetaProbePositioningTable LINK_PUBLIC ArcusPerformaxDriver usb-1.0)

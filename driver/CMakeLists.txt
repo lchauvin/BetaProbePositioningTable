@@ -1,0 +1,3 @@
+add_library(ArcusPerformaxDriver ArcusPerformaxDriver.cxx)
+
+target_include_directories (ArcusPerformaxDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

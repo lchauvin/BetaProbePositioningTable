@@ -206,7 +206,7 @@ int main(void)
   std::cout << "Scanning...";
 
   // TODO: Define scanning pattern here
-  scanSpiral(Handle);
+  scanLines(Handle);
 	
   std::cout << "Done" << std::endl;
 
@@ -489,6 +489,68 @@ bool scanSpiral(libusb_device_handle* handle)
 //--------------------------------------------------
 bool scanLines(libusb_device_handle* handle)
 {
+  double scanStep = 10*steps_mm;
+  int xReturned = 0;
+  char tmp[64];
+  std::stringstream cmd;
+
+  if(!goToZero(handle))
+    {
+      return false;
+    }
+
+  double initialY = getY(handle);
+
+  int numberOfLines = std::floor(yMax / scanStep);
+  for (int i = 0; i < numberOfLines; ++i)
+    {
+      moveYTo(handle,initialY + (i*scanStep));
+      
+      if (i%2 == 0)
+	{
+	  cmd.str("");
+	  cmd << "JX+";
+	  if(!fnPerformaxComSendRecv(handle, (char*)(cmd.str().c_str()), 64,64, tmp))
+	    {
+	      std::cout << "Failed" << std::endl;
+	      return false;
+	    }
+	  
+	  do
+	    {
+	      memset(tmp,0,64);
+	      cmd.str("");
+	      cmd << "MSTX";
+	      fnPerformaxComSendRecv(handle, (char*)(cmd.str().c_str()), 64,64, tmp);
+	      xReturned = atoi(tmp);
+      	      
+	      sleep(1);
+	     } while((xReturned&16)==0); //wait for x and y-axis to reach limit
+	  
+	}
+      else
+	{
+	  cmd.str("");
+	  cmd << "JX-";
+	  if(!fnPerformaxComSendRecv(handle, (char*)(cmd.str().c_str()), 64,64, tmp))
+	    {
+	      std::cout << "Failed" << std::endl;
+	      return false;
+	    }
+	  
+	  do
+	    {
+	      memset(tmp,0,64);
+	      cmd.str("");
+	      cmd << "MSTX";
+	      fnPerformaxComSendRecv(handle, (char*)(cmd.str().c_str()), 64,64, tmp);
+	      xReturned = atoi(tmp);
+      	      
+	      sleep(1);
+	     } while((xReturned&32)==0); //wait for x and y-axis to reach limit
+	}
+    }
+
   return true;
 }
 

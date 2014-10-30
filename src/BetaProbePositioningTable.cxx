@@ -97,6 +97,8 @@ int main(void)
       std::cout << "Could not send" << std::endl;
       return 1;
     }
+
+  std::cout << "==================================================" << std::endl;
 	
   strcpy(out, "ID"); //read current
   if(!fnPerformaxComSendRecv(Handle, out, 64,64, in))
@@ -121,6 +123,8 @@ int main(void)
       return 1;
     }	
   std::cout << "Device Number: " << in << std::endl;
+
+  std::cout << "==================================================" << std::endl << std::endl;
 	
   //--------------------------------------------------
   std::cout << "Enable motors...";
